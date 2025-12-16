@@ -1,0 +1,123 @@
+// prisma/schema.prisma
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                String   @id @default(cuid())
+  email             String   @unique
+  name              String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  
+  // Onboarding data
+  establishmentType String?
+  cuisineType       String?
+  dailyCovers       String?
+  averageTicket     Decimal?
+  experienceLevel   String?
+  primaryGoal       String?
+  onboardingDone    Boolean  @default(false)
+  
+  // Relations
+  products          Product[]
+  dishes            Dish[]
+  suppliers         Supplier[]
+  conversations     Conversation[]
+}
+
+model Supplier {
+  id        String    @id @default(cuid())
+  name      String
+  contact   String?
+  email     String?
+  phone     String?
+  address   String?
+  notes     String?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  products  Product[]
+}
+
+model Product {
+  id               String   @id @default(cuid())
+  name             String
+  photoUrl         String?
+  category         String   // Légumes, Viandes, Poissons, Épicerie, etc.
+  unit             String   // kg, L, unité, botte, barquette...
+  purchasePrice    Decimal  // Prix d'achat HT par unité
+  purchaseQuantity Decimal  // Quantité achetée (ex: 5kg)
+  unitPrice        Decimal  // Prix unitaire calculé (€/kg, €/L...)
+  lastUpdated      DateTime @updatedAt
+  createdAt        DateTime @default(now())
+  
+  userId           String
+  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  supplierId       String?
+  supplier         Supplier? @relation(fields: [supplierId], references: [id])
+  
+  dishIngredients  DishIngredient[]
+}
+
+model Dish {
+  id             String   @id @default(cuid())
+  name           String
+  photoUrl       String?
+  category       String   // Entrée, Plat, Dessert, Boisson, Menu...
+  portions       Int      // Nombre de portions par recette
+  sellingPrice   Decimal  // Prix de vente TTC
+  costPrice      Decimal  // Coût matières premières (calculé)
+  foodCostRatio  Decimal  // Ratio coût/vente en % (calculé)
+  grossMargin    Decimal  // Marge brute en € (calculé)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  
+  userId         String
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  ingredients    DishIngredient[]
+}
+
+model DishIngredient {
+  id        String  @id @default(cuid())
+  quantity  Decimal // Quantité utilisée
+  unit      String  // Unité (peut différer du produit)
+  
+  dishId    String
+  dish      Dish    @relation(fields: [dishId], references: [id], onDelete: Cascade)
+  
+  productId String
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+}
+
+model Conversation {
+  id        String    @id @default(cuid())
+  title     String?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  messages  Message[]
+}
+
+model Message {
+  id             String   @id @default(cuid())
+  role           String   // 'user' | 'assistant'
+  content        String
+  createdAt      DateTime @default(now())
+  
+  conversationId String
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+}
