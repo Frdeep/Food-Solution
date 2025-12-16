@@ -1,12 +1,12 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { useStore } from '@/store/useStore';
-import { GlassCard, Input, Button, Badge } from '@/components/ui';
+import { GlassCard, Input, Button } from '@/components/ui';
 import { X, Camera, Trash2, Plus, Minus } from 'lucide-react';
 import type { DishCategory, DishIngredient, ProductUnit } from '@/types';
-import { cn, formatPrice, calculateUnitPrice } from '@/lib/utils';
+import { cn, formatPrice } from '@/lib/utils';
 
 interface DishFormProps {
   dishId?: string | null;
@@ -19,7 +19,7 @@ const CATEGORIES: { value: DishCategory; label: string; emoji: string }[] = [
   { value: 'dessert', label: 'Dessert', emoji: '🍰' },
   { value: 'beverage', label: 'Boisson', emoji: '🥤' },
   { value: 'menu', label: 'Menu', emoji: '📋' },
-  { value: 'side', label: 'Accompagnement', emoji: '🍟' },
+  { value: 'side', label: 'Accomp.', emoji: '🍟' },
 ];
 
 interface IngredientEntry {
@@ -61,7 +61,7 @@ export function DishForm({ dishId, onClose }: DishFormProps) {
   const totalCost = calculateTotalCost();
   const costPerPortion = parseInt(portions) > 0 ? totalCost / parseInt(portions) : 0;
   const sellingPriceNum = parseFloat(sellingPrice) || 0;
-  const sellingPriceHT = sellingPriceNum / 1.1; // 10% TVA
+  const sellingPriceHT = sellingPriceNum / 1.1;
   const foodCostRatio = sellingPriceHT > 0 ? (costPerPortion / sellingPriceHT) * 100 : 0;
   const grossMargin = sellingPriceHT - costPerPortion;
 
@@ -78,7 +78,6 @@ export function DishForm({ dishId, onClose }: DishFormProps) {
     const newIngredients = [...ingredients];
     newIngredients[index] = { ...newIngredients[index], ...updates };
     
-    // Update unit when product changes
     if (updates.productId) {
       const product = products.find(p => p.id === updates.productId);
       if (product) {
@@ -151,7 +150,7 @@ export function DishForm({ dishId, onClose }: DishFormProps) {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 bg-black/50 z-50 flex items-end justify-center"
+      className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-end justify-center"
       onClick={onClose}
     >
       <motion.div
@@ -159,7 +158,7 @@ export function DishForm({ dishId, onClose }: DishFormProps) {
         animate={{ y: 0 }}
         exit={{ y: '100%' }}
         transition={{ type: 'spring', damping: 30, stiffness: 300 }}
-        className="w-full max-w-lg bg-white rounded-t-3xl max-h-[90vh] overflow-y-auto"
+        className="w-full max-w-lg bg-white rounded-t-3xl max-h-[90vh] overflow-hidden flex flex-col"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
@@ -169,22 +168,22 @@ export function DishForm({ dishId, onClose }: DishFormProps) {
           </h2>
           <button
             onClick={onClose}
-            className="p-2 rounded-full hover:bg-slate-100 transition-colors"
+            className="p-2 rounded-full hover:bg-slate-100 active:bg-slate-200 transition-colors touch-manipulation"
           >
             <X className="w-5 h-5 text-slate-600" />
           </button>
         </div>
 
         {/* Form */}
-        <form onSubmit={handleSubmit} className="p-4 space-y-6">
+        <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-4 space-y-5 overscroll-contain">
           {/* Photo upload */}
           <div className="flex justify-center">
             <button
               type="button"
-              className="w-24 h-24 rounded-2xl bg-slate-100 border-2 border-dashed border-slate-300 flex flex-col items-center justify-center gap-2 hover:border-brand-primary hover:bg-brand-primary/5 transition-colors"
+              className="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl bg-slate-100 border-2 border-dashed border-slate-300 flex flex-col items-center justify-center gap-1 hover:border-brand-primary hover:bg-brand-primary/5 active:scale-95 transition-all touch-manipulation"
             >
-              <Camera className="w-6 h-6 text-slate-400" />
-              <span className="text-xs text-slate-500">Photo</span>
+              <Camera className="w-5 h-5 sm:w-6 sm:h-6 text-slate-400" />
+              <span className="text-[10px] sm:text-xs text-slate-500">Photo</span>
             </button>
           </div>
 
@@ -202,31 +201,34 @@ export function DishForm({ dishId, onClose }: DishFormProps) {
             <label className="block text-sm font-medium text-slate-700 mb-2">
               Catégorie
             </label>
-            <div className="grid grid-cols-3 gap-2">
+            <div className="grid grid-cols-6 gap-1.5">
               {CATEGORIES.map((cat) => (
                 <button
                   key={cat.value}
                   type="button"
                   onClick={() => setCategory(cat.value)}
                   className={cn(
-                    'p-3 rounded-xl border-2 transition-all flex flex-col items-center gap-1',
+                    'p-2 rounded-xl border-2 transition-all flex flex-col items-center gap-0.5 touch-manipulation active:scale-95',
                     category === cat.value
                       ? 'border-brand-primary bg-brand-primary/5'
                       : 'border-slate-200 hover:border-slate-300'
                   )}
                 >
-                  <span className="text-xl">{cat.emoji}</span>
-                  <span className="text-xs text-slate-600">{cat.label}</span>
+                  <span className="text-lg">{cat.emoji}</span>
+                  <span className="text-[8px] sm:text-[9px] text-slate-600 truncate w-full text-center leading-tight">
+                    {cat.label}
+                  </span>
                 </button>
               ))}
             </div>
           </div>
 
           {/* Price and Portions */}
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-2 gap-3">
             <Input
-              label="Prix de vente TTC (€)"
+              label="Prix TTC (€)"
               type="number"
+              inputMode="decimal"
               step="0.01"
               placeholder="12.00"
               value={sellingPrice}
@@ -234,8 +236,9 @@ export function DishForm({ dishId, onClose }: DishFormProps) {
               error={errors.sellingPrice}
             />
             <Input
-              label="Nb de portions"
+              label="Portions"
               type="number"
+              inputMode="numeric"
               min="1"
               placeholder="1"
               value={portions}
@@ -264,7 +267,7 @@ export function DishForm({ dishId, onClose }: DishFormProps) {
             {products.length === 0 ? (
               <GlassCard className="p-4 text-center">
                 <p className="text-sm text-slate-500">
-                  Ajoutez d&apos;abord des produits pour créer une recette
+                  Ajoutez d&apos;abord des produits
                 </p>
               </GlassCard>
             ) : ingredients.length === 0 ? (
@@ -283,12 +286,12 @@ export function DishForm({ dishId, onClose }: DishFormProps) {
                   const cost = product ? ing.quantity * product.unitPrice : 0;
                   
                   return (
-                    <GlassCard key={index} className="p-3" hover={false}>
-                      <div className="flex items-center gap-3">
+                    <GlassCard key={index} className="p-2 sm:p-3" hover={false}>
+                      <div className="flex items-center gap-2">
                         <select
                           value={ing.productId}
                           onChange={(e) => updateIngredient(index, { productId: e.target.value })}
-                          className="flex-1 px-3 py-2 rounded-xl border border-slate-200 bg-white text-sm"
+                          className="flex-1 min-w-0 px-2 py-1.5 rounded-lg border border-slate-200 bg-white text-sm truncate"
                         >
                           {products.map(p => (
                             <option key={p.id} value={p.id}>{p.name}</option>
@@ -297,25 +300,26 @@ export function DishForm({ dishId, onClose }: DishFormProps) {
                         
                         <input
                           type="number"
+                          inputMode="decimal"
                           step="0.01"
                           min="0"
                           value={ing.quantity}
                           onChange={(e) => updateIngredient(index, { quantity: parseFloat(e.target.value) || 0 })}
-                          className="w-20 px-3 py-2 rounded-xl border border-slate-200 text-sm text-center"
+                          className="w-16 px-2 py-1.5 rounded-lg border border-slate-200 text-sm text-center"
                         />
                         
-                        <span className="text-sm text-slate-500 w-8">
+                        <span className="text-xs text-slate-500 w-6">
                           {ing.unit}
                         </span>
                         
-                        <span className="text-sm font-medium text-slate-700 w-16 text-right">
+                        <span className="text-xs font-medium text-slate-700 w-12 text-right">
                           {formatPrice(cost)}
                         </span>
                         
                         <button
                           type="button"
                           onClick={() => removeIngredient(index)}
-                          className="p-1 rounded-full hover:bg-danger/10 text-danger"
+                          className="p-1.5 rounded-full hover:bg-danger/10 active:bg-danger/20 text-danger touch-manipulation"
                         >
                           <Minus className="w-4 h-4" />
                         </button>
@@ -335,15 +339,15 @@ export function DishForm({ dishId, onClose }: DishFormProps) {
               foodCostRatio < 35 ? 'bg-warning/5 border-warning/20' :
               'bg-danger/5 border-danger/20'
             )}>
-              <div className="grid grid-cols-2 gap-4 text-sm">
+              <div className="grid grid-cols-2 gap-3 text-sm">
                 <div>
-                  <p className="text-slate-500">Coût MP / portion</p>
-                  <p className="text-xl font-bold text-slate-900">{formatPrice(costPerPortion)}</p>
+                  <p className="text-slate-500 text-xs">Coût / portion</p>
+                  <p className="text-lg sm:text-xl font-bold text-slate-900">{formatPrice(costPerPortion)}</p>
                 </div>
                 <div>
-                  <p className="text-slate-500">Food Cost</p>
+                  <p className="text-slate-500 text-xs">Food Cost</p>
                   <p className={cn(
-                    'text-xl font-bold',
+                    'text-lg sm:text-xl font-bold',
                     foodCostRatio < 30 ? 'text-success' :
                     foodCostRatio < 35 ? 'text-warning' : 'text-danger'
                   )}>
@@ -351,34 +355,34 @@ export function DishForm({ dishId, onClose }: DishFormProps) {
                   </p>
                 </div>
                 <div>
-                  <p className="text-slate-500">Marge brute</p>
-                  <p className="text-xl font-bold text-success">{formatPrice(grossMargin)}</p>
+                  <p className="text-slate-500 text-xs">Marge brute</p>
+                  <p className="text-lg sm:text-xl font-bold text-success">{formatPrice(grossMargin)}</p>
                 </div>
                 <div>
-                  <p className="text-slate-500">Prix HT</p>
-                  <p className="text-xl font-bold text-slate-900">{formatPrice(sellingPriceHT)}</p>
+                  <p className="text-slate-500 text-xs">Prix HT</p>
+                  <p className="text-lg sm:text-xl font-bold text-slate-900">{formatPrice(sellingPriceHT)}</p>
                 </div>
               </div>
             </GlassCard>
           )}
-
-          {/* Actions */}
-          <div className="flex gap-3 pt-4">
-            {existingDish && (
-              <Button
-                type="button"
-                variant="danger"
-                onClick={handleDelete}
-                className="px-4"
-              >
-                <Trash2 className="w-5 h-5" />
-              </Button>
-            )}
-            <Button type="submit" className="flex-1">
-              {existingDish ? 'Enregistrer' : 'Créer le plat'}
-            </Button>
-          </div>
         </form>
+
+        {/* Actions */}
+        <div className="sticky bottom-0 bg-white border-t border-slate-100 p-4 flex gap-3 safe-area-inset-bottom">
+          {existingDish && (
+            <Button
+              type="button"
+              variant="danger"
+              onClick={handleDelete}
+              className="px-4"
+            >
+              <Trash2 className="w-5 h-5" />
+            </Button>
+          )}
+          <Button onClick={handleSubmit} className="flex-1">
+            {existingDish ? 'Enregistrer' : 'Créer le plat'}
+          </Button>
+        </div>
       </motion.div>
     </motion.div>
   );

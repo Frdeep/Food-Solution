@@ -7,3 +7,4 @@ export { Badge } from './Badge';
 export { OptionCard } from './OptionCard';
 export { TypingIndicator } from './TypingIndicator';
 export { Avatar } from './Avatar';
+export { BottomNav } from './BottomNav';

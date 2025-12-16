@@ -35,7 +35,7 @@ interface AppState {
   alerts: Alert[];
   
   // UI State
-  currentView: 'home' | 'chat' | 'products' | 'dishes' | 'dish-detail';
+  currentView: 'home' | 'chat' | 'products' | 'dishes';
   selectedDishId: string | null;
   
   // Actions - Onboarding

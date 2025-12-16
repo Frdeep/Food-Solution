@@ -1,13 +1,12 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useStore } from '@/store/useStore';
-import { Avatar, GlassCard, TypingIndicator, Button } from '@/components/ui';
+import { Avatar, GlassCard, TypingIndicator } from '@/components/ui';
 import { MessageBubble } from './MessageBubble';
 import { ChatInput } from './ChatInput';
-import { RichCard } from './RichCard';
-import { ChevronLeft, MoreHorizontal, Menu } from 'lucide-react';
+import { ChevronLeft, MoreHorizontal } from 'lucide-react';
 
 interface ChatInterfaceProps {
   onBack?: () => void;
@@ -16,29 +15,10 @@ interface ChatInterfaceProps {
 export function ChatInterface({ onBack }: ChatInterfaceProps) {
   const { messages, isTyping, addMessage, setIsTyping, userName, onboardingData } = useStore();
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const [showWelcome, setShowWelcome] = useState(messages.length === 0);
+  const [hasShownWelcome, setHasShownWelcome] = useState(false);
 
-  useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages, isTyping]);
-
-  useEffect(() => {
-    // Show welcome message if no messages
-    if (messages.length === 0 && showWelcome) {
-      const timer = setTimeout(() => {
-        addMessage({
-          role: 'assistant',
-          content: getWelcomeMessage(),
-        });
-        setShowWelcome(false);
-      }, 500);
-      return () => clearTimeout(timer);
-    }
-  }, []);
-
-  const getWelcomeMessage = () => {
+  const getWelcomeMessage = useCallback(() => {
     const name = userName || 'Chef';
-    const establishment = onboardingData.establishmentType || 'restaurant';
     
     return `Salut ${name} ! 👋
 
@@ -54,24 +34,26 @@ Pour commencer, vous pouvez :
 • Me demander d'analyser un plat existant
 
 **Par quoi voulez-vous commencer ?**`;
-  };
+  }, [userName]);
 
-  const handleSendMessage = async (content: string) => {
-    // Add user message
-    addMessage({ role: 'user', content });
-    
-    // Simulate Foodyx thinking
-    setIsTyping(true);
-    
-    // Simulate response delay
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    
-    // Generate response
-    const response = generateFoodyxResponse(content);
-    
-    setIsTyping(false);
-    addMessage({ role: 'assistant', content: response });
-  };
+  // Scroll to bottom when messages change
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages, isTyping]);
+
+  // Show welcome message on first mount
+  useEffect(() => {
+    if (messages.length === 0 && !hasShownWelcome) {
+      const timer = setTimeout(() => {
+        addMessage({
+          role: 'assistant',
+          content: getWelcomeMessage(),
+        });
+        setHasShownWelcome(true);
+      }, 500);
+      return () => clearTimeout(timer);
+    }
+  }, [messages.length, hasShownWelcome, addMessage, getWelcomeMessage]);
 
   const generateFoodyxResponse = (userMessage: string): string => {
     const lowercaseMsg = userMessage.toLowerCase();
@@ -160,36 +142,53 @@ Pour vous aider au mieux, dites-moi ce que vous souhaitez faire :
 Tapez le numéro ou décrivez votre besoin !`;
   };
 
+  const handleSendMessage = async (content: string) => {
+    // Add user message
+    addMessage({ role: 'user', content });
+    
+    // Simulate Foodyx thinking
+    setIsTyping(true);
+    
+    // Simulate response delay
+    await new Promise(resolve => setTimeout(resolve, 1500));
+    
+    // Generate response
+    const response = generateFoodyxResponse(content);
+    
+    setIsTyping(false);
+    addMessage({ role: 'assistant', content: response });
+  };
+
   return (
-    <div className="h-full flex flex-col bg-gradient-to-b from-white to-surface-secondary">
+    <div className="h-full min-h-screen flex flex-col bg-gradient-to-b from-white to-surface-secondary">
       {/* Header */}
-      <header className="flex items-center justify-between p-4 border-b border-slate-100 bg-white/80 backdrop-blur-lg">
+      <header className="sticky top-0 z-10 flex items-center justify-between p-3 sm:p-4 border-b border-slate-100 bg-white/80 backdrop-blur-lg safe-area-inset-top">
         <button 
           onClick={onBack}
-          className="p-2 rounded-full hover:bg-slate-100 transition-colors"
+          className="p-2 rounded-full hover:bg-slate-100 active:bg-slate-200 transition-colors touch-manipulation"
         >
           <ChevronLeft className="w-6 h-6 text-slate-600" />
         </button>
         
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 sm:gap-3">
           <Avatar variant="foodyx" size="sm" />
           <div>
-            <h1 className="font-semibold text-slate-900">Foodyx</h1>
+            <h1 className="font-semibold text-slate-900 text-sm sm:text-base">Foodyx</h1>
             <p className="text-xs text-success flex items-center gap-1">
-              <span className="w-2 h-2 rounded-full bg-success animate-pulse" />
+              <span className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-success animate-pulse" />
               En ligne
             </p>
           </div>
         </div>
         
-        <button className="p-2 rounded-full hover:bg-slate-100 transition-colors">
+        <button className="p-2 rounded-full hover:bg-slate-100 active:bg-slate-200 transition-colors touch-manipulation">
           <MoreHorizontal className="w-6 h-6 text-slate-600" />
         </button>
       </header>
 
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-4">
-        <AnimatePresence>
+      <div className="flex-1 overflow-y-auto p-3 sm:p-4 space-y-3 sm:space-y-4 overscroll-contain">
+        <AnimatePresence mode="popLayout">
           {messages.map((message) => (
             <MessageBubble key={message.id} message={message} />
           ))}
@@ -201,16 +200,16 @@ Tapez le numéro ou décrivez votre besoin !`;
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
           >
-            <div className="flex items-start gap-3">
+            <div className="flex items-start gap-2 sm:gap-3">
               <Avatar variant="foodyx" size="sm" />
-              <GlassCard className="px-4 py-3" hover={false}>
+              <GlassCard className="px-3 py-2 sm:px-4 sm:py-3" hover={false}>
                 <TypingIndicator />
               </GlassCard>
             </div>
           </motion.div>
         )}
         
-        <div ref={messagesEndRef} />
+        <div ref={messagesEndRef} className="h-1" />
       </div>
 
       {/* Input */}

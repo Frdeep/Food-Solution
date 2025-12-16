@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { useStore } from '@/store/useStore';
 import { GlassCard, Input, Button } from '@/components/ui';
@@ -17,11 +17,11 @@ const CATEGORIES: { value: ProductCategory; label: string; emoji: string }[] = [
   { value: 'vegetables', label: 'Légumes', emoji: '🥬' },
   { value: 'meat', label: 'Viandes', emoji: '🥩' },
   { value: 'fish', label: 'Poissons', emoji: '🐟' },
-  { value: 'dairy', label: 'Produits laitiers', emoji: '🧀' },
+  { value: 'dairy', label: 'Laitiers', emoji: '🧀' },
   { value: 'grocery', label: 'Épicerie', emoji: '🛒' },
   { value: 'beverages', label: 'Boissons', emoji: '🥤' },
-  { value: 'condiments', label: 'Condiments', emoji: '🧂' },
-  { value: 'bread', label: 'Boulangerie', emoji: '🍞' },
+  { value: 'condiments', label: 'Sauces', emoji: '🧂' },
+  { value: 'bread', label: 'Pain', emoji: '🍞' },
   { value: 'frozen', label: 'Surgelés', emoji: '🧊' },
   { value: 'other', label: 'Autre', emoji: '📦' },
 ];
@@ -31,11 +31,8 @@ const UNITS: { value: ProductUnit; label: string }[] = [
   { value: 'g', label: 'Gramme (g)' },
   { value: 'L', label: 'Litre (L)' },
   { value: 'cl', label: 'Centilitre (cl)' },
-  { value: 'ml', label: 'Millilitre (ml)' },
   { value: 'unit', label: 'Unité (pièce)' },
-  { value: 'bunch', label: 'Botte' },
   { value: 'pack', label: 'Paquet' },
-  { value: 'box', label: 'Boîte' },
 ];
 
 export function ProductForm({ productId, onClose }: ProductFormProps) {
@@ -93,12 +90,16 @@ export function ProductForm({ productId, onClose }: ProductFormProps) {
     }
   };
 
+  const unitPrice = purchasePrice && purchaseQuantity && parseFloat(purchaseQuantity) > 0
+    ? (parseFloat(purchasePrice) / parseFloat(purchaseQuantity)).toFixed(2)
+    : null;
+
   return (
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 bg-black/50 z-50 flex items-end justify-center"
+      className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-end justify-center"
       onClick={onClose}
     >
       <motion.div
@@ -106,32 +107,32 @@ export function ProductForm({ productId, onClose }: ProductFormProps) {
         animate={{ y: 0 }}
         exit={{ y: '100%' }}
         transition={{ type: 'spring', damping: 30, stiffness: 300 }}
-        className="w-full max-w-lg bg-white rounded-t-3xl max-h-[90vh] overflow-y-auto"
+        className="w-full max-w-lg bg-white rounded-t-3xl max-h-[90vh] overflow-hidden flex flex-col"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="sticky top-0 bg-white border-b border-slate-100 p-4 flex items-center justify-between">
+        <div className="sticky top-0 bg-white border-b border-slate-100 p-4 flex items-center justify-between z-10">
           <h2 className="font-bold text-lg text-slate-900">
             {existingProduct ? 'Modifier le produit' : 'Nouveau produit'}
           </h2>
           <button
             onClick={onClose}
-            className="p-2 rounded-full hover:bg-slate-100 transition-colors"
+            className="p-2 rounded-full hover:bg-slate-100 active:bg-slate-200 transition-colors touch-manipulation"
           >
             <X className="w-5 h-5 text-slate-600" />
           </button>
         </div>
 
         {/* Form */}
-        <form onSubmit={handleSubmit} className="p-4 space-y-6">
+        <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-4 space-y-5 overscroll-contain">
           {/* Photo upload */}
           <div className="flex justify-center">
             <button
               type="button"
-              className="w-24 h-24 rounded-2xl bg-slate-100 border-2 border-dashed border-slate-300 flex flex-col items-center justify-center gap-2 hover:border-brand-primary hover:bg-brand-primary/5 transition-colors"
+              className="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl bg-slate-100 border-2 border-dashed border-slate-300 flex flex-col items-center justify-center gap-1 hover:border-brand-primary hover:bg-brand-primary/5 active:scale-95 transition-all touch-manipulation"
             >
-              <Camera className="w-6 h-6 text-slate-400" />
-              <span className="text-xs text-slate-500">Photo</span>
+              <Camera className="w-5 h-5 sm:w-6 sm:h-6 text-slate-400" />
+              <span className="text-[10px] sm:text-xs text-slate-500">Photo</span>
             </button>
           </div>
 
@@ -149,21 +150,21 @@ export function ProductForm({ productId, onClose }: ProductFormProps) {
             <label className="block text-sm font-medium text-slate-700 mb-2">
               Catégorie
             </label>
-            <div className="grid grid-cols-5 gap-2">
+            <div className="grid grid-cols-5 gap-1.5 sm:gap-2">
               {CATEGORIES.map((cat) => (
                 <button
                   key={cat.value}
                   type="button"
                   onClick={() => setCategory(cat.value)}
                   className={cn(
-                    'p-3 rounded-xl border-2 transition-all flex flex-col items-center gap-1',
+                    'p-2 sm:p-3 rounded-xl border-2 transition-all flex flex-col items-center gap-0.5 touch-manipulation active:scale-95',
                     category === cat.value
                       ? 'border-brand-primary bg-brand-primary/5'
                       : 'border-slate-200 hover:border-slate-300'
                   )}
                 >
-                  <span className="text-xl">{cat.emoji}</span>
-                  <span className="text-xs text-slate-600 truncate w-full text-center">
+                  <span className="text-lg sm:text-xl">{cat.emoji}</span>
+                  <span className="text-[9px] sm:text-[10px] text-slate-600 truncate w-full text-center leading-tight">
                     {cat.label}
                   </span>
                 </button>
@@ -172,10 +173,11 @@ export function ProductForm({ productId, onClose }: ProductFormProps) {
           </div>
 
           {/* Price and Quantity */}
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-2 gap-3">
             <Input
               label="Prix d'achat (€)"
               type="number"
+              inputMode="decimal"
               step="0.01"
               placeholder="4.50"
               value={purchasePrice}
@@ -183,8 +185,9 @@ export function ProductForm({ productId, onClose }: ProductFormProps) {
               error={errors.purchasePrice}
             />
             <Input
-              label="Quantité achetée"
+              label="Quantité"
               type="number"
+              inputMode="decimal"
               step="0.01"
               placeholder="1"
               value={purchaseQuantity}
@@ -201,7 +204,7 @@ export function ProductForm({ productId, onClose }: ProductFormProps) {
             <select
               value={unit}
               onChange={(e) => setUnit(e.target.value as ProductUnit)}
-              className="w-full px-4 py-3 rounded-2xl border border-slate-200 bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-brand-primary/50 focus:border-brand-primary"
+              className="w-full px-4 py-3 rounded-2xl border border-slate-200 bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-brand-primary/50 focus:border-brand-primary text-base"
             >
               {UNITS.map((u) => (
                 <option key={u.value} value={u.value}>
@@ -212,32 +215,32 @@ export function ProductForm({ productId, onClose }: ProductFormProps) {
           </div>
 
           {/* Calculated unit price */}
-          {purchasePrice && purchaseQuantity && parseFloat(purchaseQuantity) > 0 && (
+          {unitPrice && (
             <GlassCard className="p-4 bg-success/5 border-success/20">
-              <p className="text-sm text-slate-600">Prix unitaire calculé :</p>
-              <p className="text-2xl font-bold text-success">
-                {(parseFloat(purchasePrice) / parseFloat(purchaseQuantity)).toFixed(2)}€/{unit}
+              <p className="text-sm text-slate-600 mb-1">Prix unitaire calculé</p>
+              <p className="text-2xl sm:text-3xl font-bold text-success">
+                {unitPrice}€<span className="text-base font-normal text-slate-500">/{unit}</span>
               </p>
             </GlassCard>
           )}
-
-          {/* Actions */}
-          <div className="flex gap-3 pt-4">
-            {existingProduct && (
-              <Button
-                type="button"
-                variant="danger"
-                onClick={handleDelete}
-                className="px-4"
-              >
-                <Trash2 className="w-5 h-5" />
-              </Button>
-            )}
-            <Button type="submit" className="flex-1">
-              {existingProduct ? 'Enregistrer' : 'Ajouter le produit'}
-            </Button>
-          </div>
         </form>
+
+        {/* Actions - Fixed at bottom */}
+        <div className="sticky bottom-0 bg-white border-t border-slate-100 p-4 flex gap-3 safe-area-inset-bottom">
+          {existingProduct && (
+            <Button
+              type="button"
+              variant="danger"
+              onClick={handleDelete}
+              className="px-4"
+            >
+              <Trash2 className="w-5 h-5" />
+            </Button>
+          )}
+          <Button onClick={handleSubmit} className="flex-1">
+            {existingProduct ? 'Enregistrer' : 'Ajouter le produit'}
+          </Button>
+        </div>
       </motion.div>
     </motion.div>
   );

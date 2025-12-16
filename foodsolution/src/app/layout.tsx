@@ -19,6 +19,7 @@ export const viewport: Viewport = {
   initialScale: 1,
   maximumScale: 1,
   userScalable: false,
+  viewportFit: 'cover',
   themeColor: '#6366F1',
 };
 
@@ -28,7 +29,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="fr">
+    <html lang="fr" className="h-full">
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
@@ -36,9 +37,11 @@ export default function RootLayout({
           href="https://fonts.googleapis.com/css2?family=Inter:wght@100;300;400;500;600;700&display=swap" 
           rel="stylesheet" 
         />
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="mobile-web-app-capable" content="yes" />
       </head>
-      <body className="antialiased">
-        <div className="container-app">
+      <body className="antialiased h-full">
+        <div className="container-app h-full">
           {children}
         </div>
       </body>
